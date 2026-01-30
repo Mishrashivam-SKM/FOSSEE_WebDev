@@ -20,18 +20,20 @@ This guide covers deploying the Chemical Equipment Visualizer to production.
    - Go to Railway dashboard
    - Click "New Project" → "Deploy from GitHub repo"
    - Select your repository
+   - Railway will automatically detect Python and use the Procfile
 
 2. **Configure Environment Variables**
    
-   Add these variables in Railway dashboard:
+   Add these variables in Railway dashboard (Settings → Variables):
    
    ```
    DJANGO_SECRET_KEY=<generate-a-secure-random-key>
    DJANGO_SETTINGS_MODULE=config.settings.production
    DEBUG=False
-   DJANGO_ALLOWED_HOSTS=<your-railway-domain>.railway.app
+   DJANGO_ALLOWED_HOSTS=<your-railway-domain>.up.railway.app
    CORS_ALLOWED_ORIGINS=https://<your-frontend-domain>.vercel.app,https://<your-frontend-domain>.netlify.app
    PORT=8000
+   PYTHONPATH=/app/backend
    ```
 
 3. **Generate Secret Key**
@@ -42,14 +44,23 @@ This guide covers deploying the Chemical Equipment Visualizer to production.
    ```
 
 4. **Deploy**
-   - Railway will automatically detect the `railway.json` configuration
-   - It will install dependencies, run migrations, and start the server
-   - Your API will be available at: `https://<your-app>.railway.app/api/`
+   - Railway will automatically:
+     - Install dependencies from requirements.txt
+     - Run migrations via Procfile
+     - Start gunicorn server
+   - Your API will be available at: `https://<your-app>.up.railway.app/api/`
 
 5. **Verify Deployment**
    ```bash
-   curl https://<your-app>.railway.app/api/
+   curl https://<your-app>.up.railway.app/api/
    ```
+
+### Important Notes
+
+- The root `requirements.txt` points to `backend/requirements.txt`
+- The root `Procfile` handles migrations and server startup
+- Railway automatically sets the `PORT` environment variable
+- Static files are served by WhiteNoise (no separate static file server needed)
 
 ### Database Persistence
 

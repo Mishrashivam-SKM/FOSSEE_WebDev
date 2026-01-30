@@ -1,0 +1,4 @@
+# Root requirements file for Railway deployment
+# This file points to the backend requirements
+
+-r backend/requirements.txt
