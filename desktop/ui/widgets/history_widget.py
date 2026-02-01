@@ -456,10 +456,13 @@ class HistoryWidget(QWidget):
                 border-radius: 12px;
             }}
         """)
+        # Set minimum height to ensure proper spacing when empty
+        frame.setMinimumHeight(300)
+        frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(48, 48, 48, 48)
-        layout.setSpacing(8)
+        layout.setContentsMargins(48, 64, 48, 64)
+        layout.setSpacing(12)
         layout.setAlignment(Qt.AlignCenter)
         
         # Icon
@@ -563,6 +566,91 @@ class HistoryWidget(QWidget):
             self.list_layout.insertWidget(len(self.dataset_cards), card)
             self.dataset_cards.append(card)
     
+    def _show_styled_message(self, title: str, message: str, icon_type: str = "info") -> None:
+        """Show a styled message box with proper color contrast."""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        
+        if icon_type == "warning":
+            msg_box.setIcon(QMessageBox.Warning)
+        elif icon_type == "error":
+            msg_box.setIcon(QMessageBox.Critical)
+        elif icon_type == "question":
+            msg_box.setIcon(QMessageBox.Question)
+        else:
+            msg_box.setIcon(QMessageBox.Information)
+        
+        msg_box.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: {COLORS['bg_card']};
+            }}
+            QMessageBox QLabel {{
+                color: {COLORS['text_primary']};
+                font-size: 14px;
+                min-width: 250px;
+                padding: 8px;
+            }}
+            QMessageBox QPushButton {{
+                background: {COLORS['primary']};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-size: 13px;
+                font-weight: 600;
+                min-width: 80px;
+            }}
+            QMessageBox QPushButton:hover {{
+                background: {COLORS['primary_dark']};
+            }}
+        """)
+        msg_box.exec_()
+    
+    def _show_styled_confirm(self, title: str, message: str) -> bool:
+        """Show a styled confirmation dialog with proper color contrast."""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.No)
+        
+        msg_box.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: {COLORS['bg_card']};
+            }}
+            QMessageBox QLabel {{
+                color: {COLORS['text_primary']};
+                font-size: 14px;
+                min-width: 280px;
+                padding: 8px;
+            }}
+            QMessageBox QPushButton {{
+                background: {COLORS['gray_200']};
+                color: {COLORS['text_primary']};
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-size: 13px;
+                font-weight: 600;
+                min-width: 80px;
+            }}
+            QMessageBox QPushButton:hover {{
+                background: {COLORS['gray_300']};
+            }}
+            QMessageBox QPushButton[text="Yes"], 
+            QMessageBox QPushButton[text="&Yes"] {{
+                background: {COLORS['danger']};
+                color: white;
+            }}
+            QMessageBox QPushButton[text="Yes"]:hover,
+            QMessageBox QPushButton[text="&Yes"]:hover {{
+                background: {COLORS['danger_light']};
+            }}
+        """)
+        return msg_box.exec_() == QMessageBox.Yes
+
     def _on_view(self, dataset_id: int) -> None:
         """Handle view button click."""
         self.navigate_to.emit(f"analysis:{dataset_id}")
@@ -595,15 +683,15 @@ class HistoryWidget(QWidget):
             success = self.api_client.download_pdf(dataset_id, file_path)
             
             if success:
-                QMessageBox.information(
-                    self,
+                self._show_styled_message(
                     "Success",
-                    f"PDF report saved to:\n{file_path}"
+                    f"PDF report saved to:\n{file_path}",
+                    "info"
                 )
             else:
-                QMessageBox.warning(self, "Error", "Failed to download PDF")
+                self._show_styled_message("Error", "Failed to download PDF", "error")
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to download PDF:\n{str(e)}")
+            self._show_styled_message("Error", f"Failed to download PDF:\n{str(e)}", "error")
         finally:
             for card in self.dataset_cards:
                 if card.dataset_id == dataset_id:
@@ -612,15 +700,12 @@ class HistoryWidget(QWidget):
     
     def _on_delete(self, dataset_id: int, name: str) -> None:
         """Handle delete with confirmation."""
-        reply = QMessageBox.question(
-            self,
+        confirmed = self._show_styled_confirm(
             "Confirm Delete",
-            f'Are you sure you want to delete "{name}"?',
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            f'Are you sure you want to delete "{name}"?'
         )
         
-        if reply != QMessageBox.Yes:
+        if not confirmed:
             return
         
         # Find the card and set loading state
@@ -637,9 +722,9 @@ class HistoryWidget(QWidget):
                 self._load_datasets()
             else:
                 error = result.get('error', 'Delete failed')
-                QMessageBox.warning(self, "Error", f"Failed to delete dataset:\n{error}")
+                self._show_styled_message("Error", f"Failed to delete dataset:\n{error}", "error")
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to delete dataset:\n{str(e)}")
+            self._show_styled_message("Error", f"Failed to delete dataset:\n{str(e)}", "error")
         finally:
             for card in self.dataset_cards:
                 if card.dataset_id == dataset_id:

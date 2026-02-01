@@ -41,7 +41,6 @@ export const useEquipmentData = () => {
   }, []);
 
   const fetchAnalytics = useCallback(async (datasetId) => {
-    setLoading(true);
     setError(null);
     try {
       const data = await equipmentService.getAnalytics(datasetId);
@@ -50,13 +49,10 @@ export const useEquipmentData = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to fetch analytics');
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   const fetchEquipment = useCallback(async (datasetId) => {
-    setLoading(true);
     setError(null);
     try {
       const data = await equipmentService.getEquipment(datasetId);
@@ -65,8 +61,6 @@ export const useEquipmentData = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to fetch equipment');
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -87,7 +81,7 @@ export const useEquipmentData = () => {
   }, [fetchDatasets]);
 
   const deleteDataset = useCallback(async (id) => {
-    setLoading(true);
+    // Don't set global loading state for delete operations
     setError(null);
     try {
       await equipmentService.deleteDataset(id);
@@ -97,13 +91,11 @@ export const useEquipmentData = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete dataset');
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, [fetchDatasets]);
 
   const downloadPDF = useCallback(async (datasetId) => {
-    setLoading(true);
+    // Don't set global loading state for download operations
     setError(null);
     try {
       await equipmentService.downloadPDF(datasetId);
@@ -111,8 +103,6 @@ export const useEquipmentData = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to download PDF');
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 

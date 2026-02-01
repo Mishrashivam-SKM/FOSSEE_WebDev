@@ -120,6 +120,45 @@ class AnalysisWidget(QWidget):
         self.dataset_id: Optional[int] = None
         self._setup_ui()
     
+    def _show_styled_message(self, title: str, message: str, icon_type: str = "info") -> None:
+        """Show a styled message box with proper color contrast."""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        
+        if icon_type == "warning":
+            msg_box.setIcon(QMessageBox.Warning)
+        elif icon_type == "error":
+            msg_box.setIcon(QMessageBox.Critical)
+        else:
+            msg_box.setIcon(QMessageBox.Information)
+        
+        msg_box.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: {COLORS['bg_card']};
+            }}
+            QMessageBox QLabel {{
+                color: {COLORS['text_primary']};
+                font-size: 14px;
+                min-width: 250px;
+                padding: 8px;
+            }}
+            QMessageBox QPushButton {{
+                background: {COLORS['primary']};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-size: 13px;
+                font-weight: 600;
+                min-width: 80px;
+            }}
+            QMessageBox QPushButton:hover {{
+                background: {COLORS['primary_dark']};
+            }}
+        """)
+        msg_box.exec_()
+
     def _setup_ui(self) -> None:
         """Setup the analysis page UI layout matching web exactly."""
         self.setStyleSheet(f"background: {COLORS['bg_primary']};")
@@ -856,15 +895,15 @@ class AnalysisWidget(QWidget):
             success = self.api_client.download_pdf(self.dataset_id, file_path)
             
             if success:
-                QMessageBox.information(
-                    self,
+                self._show_styled_message(
                     "Success",
-                    f"PDF report saved to:\n{file_path}"
+                    f"PDF report saved to:\n{file_path}",
+                    "info"
                 )
             else:
-                QMessageBox.warning(self, "Error", "Failed to download PDF")
+                self._show_styled_message("Error", "Failed to download PDF", "error")
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to download PDF:\n{str(e)}")
+            self._show_styled_message("Error", f"Failed to download PDF:\n{str(e)}", "error")
         finally:
             self.download_btn.setEnabled(True)
             self.download_btn.setText("Download PDF Report")
