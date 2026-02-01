@@ -309,7 +309,7 @@ This project is developed for FOSSEE.
 
 ## 👥 Authors
 
-FOSSEE Team
+Shivam Mishra
 
 ## 🙏 Acknowledgments
 
